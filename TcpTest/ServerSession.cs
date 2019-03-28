@@ -31,8 +31,11 @@ namespace Emulators.Common
                         var request = ReadRequest(stream);
 
                         var dt = DateTime.Now;
-                        var response = processor.ProcessRequest(request);
-                        WriteStream(response, stream);
+                        var response = processor.ProcessRawRequest(request);
+
+                        //var data = Encoding.ASCII.GetBytes(response);
+
+                        WriteStreamBytes(response, stream);
                         Console.WriteLine((DateTime.Now - dt).TotalMilliseconds);
                     }
                 }
@@ -55,7 +58,8 @@ namespace Emulators.Common
 
             try
             {
-                request = ReadStream(stream, "server");
+                byte[] bytes = ReadStreamBytes(stream, "server");
+                request = Encoding.ASCII.GetString(bytes);
             }
             catch
             {

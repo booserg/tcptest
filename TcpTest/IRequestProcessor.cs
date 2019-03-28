@@ -8,6 +8,8 @@ namespace Emulators.Common
 {
     public interface IRequestProcessor
     {
-        string ProcessRequest(string request);
+        //string ProcessRequest(string request);
+
+        byte[] ProcessRawRequest(string request);
     }
 }

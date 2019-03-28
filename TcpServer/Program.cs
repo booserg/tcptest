@@ -17,22 +17,31 @@ namespace TcpServer
 
         static async Task MainAsync(string[] args)
         {
-            Server server = new Server(new Processor());
+            Server server = new Server(new ByteProcessor());
             await server.Start(2323);
 
             Console.ReadKey();
         }
 
-        class Processor : IRequestProcessor
+        class ByteProcessor : IRequestProcessor
         {
-            public string ProcessRequest(string request)
+            byte[] data = null;
+
+            public byte[] ProcessRawRequest(string request)
             {
-                var data = File.ReadAllBytes(@"C:\tmp\source\green\01.bmp");
+                if(data == null)
+                    data = File.ReadAllBytes(@"C:\tmp\source\green\01.bmp");
 
-                var str = Convert.ToBase64String(data) + "\r\n";
-
-                return str;
+                return data;
             }
         }
+
+        //class StringProcessor : IRequestProcessor
+        //{
+        //    public string ProcessRequest(string request)
+        //    {
+        //        return "Hello";
+        //    }
+        //}
     }
 }

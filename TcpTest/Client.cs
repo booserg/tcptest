@@ -25,12 +25,15 @@ namespace Emulators.Common
         {
             try
             {
-                WriteStream(commandText, nwStream);
+                var data = Encoding.ASCII.GetBytes(commandText);
+
+                WriteStreamBytes(data, nwStream);
 
                 var dt = DateTime.Now;
-                var response = ReadStream(nwStream, "client");
+                data = ReadStreamBytes(nwStream, "client");
                 Console.WriteLine("whole read time: " + (DateTime.Now - dt).TotalMilliseconds);
 
+                var response = Encoding.ASCII.GetString(data);
                 return response;
             }
             catch (Exception exc)

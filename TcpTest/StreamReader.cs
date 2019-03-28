@@ -8,9 +8,10 @@ namespace Emulators.Common
 {
     public class StreamBase
     {
-        protected int bufferSize = 33554432;
-        protected int maxMessageLength = 33554432;
+        protected int bufferSize = 20000000;
+        protected int maxMessageLength = 40000000;
         protected string escapeChars = "\r\n";
+        protected int headerLength = 4;
 
         protected string ReadStream(NetworkStream stream, string name)
         {
@@ -77,9 +78,6 @@ namespace Emulators.Common
 
         protected byte[] ReadStreamBytes(NetworkStream stream, string name)
         {
-            DateTime whole = DateTime.Now;
-
-            DateTime dt = DateTime.Now;
             byte[] rawData = new byte[bufferSize];
             int bytesCnt;
 
@@ -92,11 +90,7 @@ namespace Emulators.Common
             {
                 if (stream.DataAvailable)
                 {
-                    Console.WriteLine("intitialization: " + (DateTime.Now - dt).TotalMilliseconds);
-
-                    dt = DateTime.Now;
                     bytesCnt = stream.Read(rawData, 0, rawData.Length);
-                    Console.WriteLine("read from stream: " + (DateTime.Now - dt).TotalMilliseconds);
 
                     if (bytesCnt > 0)
                     {
@@ -105,9 +99,9 @@ namespace Emulators.Common
                             messageLengthRemains = ConvertToInt(rawData);
                             data = new byte[messageLengthRemains];
 
-                            rawData.Skip(8).Take(bytesCnt).ToArray().CopyTo(data, 0);
-                            messageLengthRemains -= bytesCnt - 8;
-                            messageLengthRead += bytesCnt - 8;
+                            rawData.Skip(4).Take(bytesCnt - headerLength).ToArray().CopyTo(data, 0);
+                            messageLengthRemains -= bytesCnt - headerLength;
+                            messageLengthRead += bytesCnt - headerLength;
                         }
                         else if (messageLengthRemains == 0 && messageLengthRead > 0)
                         {
@@ -115,49 +109,19 @@ namespace Emulators.Common
                         }
                         else
                         {
-                            rawData.CopyTo(data, messageLengthRead);
+                            rawData.Take(bytesCnt).ToArray().CopyTo(data, messageLengthRead);
+                            messageLengthRemains -= bytesCnt;
+                            messageLengthRead += bytesCnt;
                         }
-                        
-                        //dt = DateTime.Now;
-                        //string chunk = Encoding.ASCII.GetString(rawData);
-                        //chunk = chunk.Substring(0, bytesCnt);
-                        //Console.WriteLine("byte to string: " + (DateTime.Now - dt).TotalMilliseconds);
 
-                        //dt = DateTime.Now;
-                        //var escapeIndex = chunk.LastIndexOf(escapeChars);
-                        //Console.WriteLine("look for escape: " + (DateTime.Now - dt).TotalMilliseconds);
-
-                        //if (escapeIndex > 0)
-                        //{
-                        //    dt = DateTime.Now;
-                        //    var lastChunk = chunk.Substring(0, escapeIndex);
-                        //    Console.WriteLine("substring last chunk: " + (DateTime.Now - dt).TotalMilliseconds);
-
-                        //    dt = DateTime.Now;
-                        //    response.Append(lastChunk);
-                        //    Console.WriteLine("append last chunk: " + (DateTime.Now - dt).TotalMilliseconds);
-                        //    break;
-                        //}
-                        //else
-                        //{
-                        //    dt = DateTime.Now;
-                        //    response.Append(chunk);
-                        //    Console.WriteLine("append chunk: " + (DateTime.Now - dt).TotalMilliseconds);
-                        //    if (response.Length > maxMessageLength)
-                        //    {
-                        //        throw new ArgumentOutOfRangeException();
-                        //    }
-                        //}
+                        if (messageLengthRemains == 0)
+                            break;
                     }
                 }
 
                 Thread.Sleep(10);
             }
-
-            //dt = DateTime.Now;
-            //var result = response.ToString();
-            //Console.WriteLine("conver result to string: " + (DateTime.Now - dt).TotalMilliseconds);
-            //Console.WriteLine("inner whole time: " + (DateTime.Now - whole).TotalMilliseconds);
+            
             return data;
         }
 
